@@ -1,0 +1,247 @@
+#!/usr/bin/env bash 
+#
+# Colorize
+# Author: Eric T. Jorgensen
+# Date: 17-Jun-2014
+# License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
+#
+# This is NOT a direct answer to an in-class lab assignment, but rather a
+# similar-concepts alternate task.  Functions, locals, arrays, stdout/stderr,
+# pattern matching, and command-line options.
+#
+# This was prompted by a student's questions about cycling through colors 
+# deeper than the on/off basics I scribbled on white boards during tutoring 
+# sessions.  After hinting only, "Yeah, that's doable," I had to do it.
+#
+# Cute Embedded Nonsense Hack:
+#       Colorize a text file using a rotating sequence of colors.
+#
+# Basic line-by-line cycle.  Try breaking it, allowing the color database to 
+# control more of the schema, redirecting output to a file and writing a 
+# script to UNcolor that file, or go all-out and display a context-color scheme.
+#
+
+readonly MINARGS=1              # Minimum number of files to colorize
+readonly DATAFORMAT="^([[:space:]]*#|[[:digit:]]*%[[:alpha:]]*$)"
+readonly COMMENTS="^[[:space:]]*#"
+# Two acceptible data file format line styles:
+#       # Commented lines
+#       number%colorname
+
+declare -gA COLORS              # Declare array of colors
+
+setup()
+{
+    setcolors
+    oldIFS=$IFS                 # Restore IFS later in case auto-export is on
+    IFS=$'\n'                   # Newline IFS, needed to accept spacey names
+
+    # Process some command-line options
+    while getopts ":dhvf:" opts
+    do
+        case $opts in
+            d)  set -x            ;;    # bash -x option
+            f)  filecdb=${OPTARG} ;;    # Set database file of colors
+            h)  syntax            ;;    # Explicitly show syntax
+            v)  verbose=1         ;;
+            \?) errmesg "Unrecognized option -${OPTARG}"          ;;
+            :)  fatalerr "Option -${OPTARG} requires an argument" ;;
+        esac
+    done
+
+    # Defauls for anything yet unset
+    filecdb=${filecdb:="$HOME/git/bash-examples/colors.conf"}
+    verbose=${verbose:=0}
+
+    # Put some extras on the screen if we want the extras
+    verbose "filecdb: ${filecdb}\nverbose: ${verbose}"
+
+    # Require availability and format of the color-cycle database
+    if ! $(request_file "$filecdb"); then
+        fatalerr "$filecdb: required file unavailable"
+    fi
+
+    # Check for data format and populate COLORS array
+    local line=""
+    for line in $(cat "$filecdb")
+    do
+        [[ ! "$line" =~ $DATAFORMAT ]] \
+            && fatalerr "$filecdb: error in data format"
+        [[ ! "$line" =~ $COMMENTS ]] \
+            && COLORS[${line%[%]*}]=${line#*%}  # Load data into an array, eg:
+                                                #   file.... => array...........
+                                                #   0%red    => COLORS[0]=red
+                                                #   1%yellow => COLORS[1]=yellow
+                                                #   # ignored comments
+    done
+
+    maxcolors=${#COLORS[@]}            # So many colors...
+    [[ $maxcolors -eq 0 ]] && fatalerr "Evading division by 0"
+}
+
+syntax()
+{
+    # Display program's syntax if a user doesn't pass a file to script
+    # ...or if they request it via options
+    local numargs=${1:-0}
+
+    local usetxt=$(cat <<EOF
+Usage: ${cbold}${0##*/}${coff} [OPTION]... ${cbold}[DIR|FILE]${coff}...
+
+Options:
+    -d              (debug: trace script commands)
+    -f <file>       (colordb: alternate colordb file)
+    -h              (help: display usage text)
+    -v              (verbose: display names/types as processed)
+
+FILE (or DIRECTORY) name(s) are required to process with the script
+EOF
+)
+
+    if [[ $numargs -lt $MINARGS ]]; then
+        output "$usetxt" >&2            # stderr for clean potential redirects
+        cleanup
+        exit 
+    fi
+}
+
+setcolors()
+{
+    # Experiment with more codes by searching for "bash colors"
+    # ...Some codes like "Blink" don't work with all terminals (thank sanity)
+    # ...Explore ways to let the color database file control the names/codes
+    cbold='\e[1m'       # Bold
+    coff='\e[0m'        # Reset
+    black='\e[0;30m'    # Standard Black
+    red='\e[0;31m'      # Standard Red
+    green='\e[0;32m'    # Standard Green
+    yellow='\e[0;33m'   # Standard Yellow
+    blue='\e[0;34m'     # Standard Blue
+    purple='\e[0;35m'   # Standard Purple
+    cyan='\e[0;36m'     # Standard Cyan
+    white='\e[0;37m'    # Standard White
+}
+
+unsetcolors()
+{
+    # Part of cleanup, but listed here to help remember to unset anything
+    # added above; allowing for database table control can skip this
+    unset cbold coff black red green yellow blue purple cyan white
+}
+
+verbose()
+{
+    # Only display message if running in verbose mode
+    [[ $verbose -eq 1 ]] \
+        && output "${cbold}${*}${coff}" >&2     # For clean redirects
+}
+
+request_file()
+{
+    # Request readable file before continuing; fatal or not, it depends
+    # General function; this doesn't sanitize file input
+
+    [[ ! -e "$1" ]] && return 1                 # Requested file doesn't exist
+    [[ ! -f "$1" ]] && return 1                 # ...is not a file
+    [[ ! -r "$1" ]] && return 1                 # ...is not readable
+    local type=$(file -b --mime-type "$1")
+    [[ ! "$type" =~ ^text/.* ]] && return 1     # ...is not a text file
+    return 0
+}
+
+request_dir()
+{
+    # Request readable directory for spelunking; fatal or not, it depends
+
+    [[ ! -e "$1" ]] && return 1         # Requested dir does not exist
+    [[ ! -d "$1" ]] && return 1         # ...is not a dir
+    [[ ! -r "$1" ]] && return 1         # ...is not readable
+    [[ ! -x "$1" ]] && return 1         # ...is not enterable
+    return 0
+}
+
+process()
+{
+    local arg="$1"
+    local file=""
+
+    # Test availability of file or directory provided
+    if $(request_file "$arg") || $(request_dir "$arg"); then
+        # Find files within...
+        for file in $(find "$arg" -type f)
+        do
+            # Test availability of file
+            if $(request_file "$file"); then
+                verbose "Colorizing $file"
+                colorize "$file"
+            else
+                errmesg "$file not colorizable" >&2
+            fi
+        done
+    else
+        errmesg "$arg not available" >&2
+    fi
+}
+
+output()
+{
+    echo -e "$*"                        # -e for escaped chars (like colors)
+}
+
+colorize()
+{
+    local file="$1"
+    local count=0
+    local line=""
+    for item in $(cat "$file")
+    do
+        local idx=$(( count % maxcolors ))  # %-mod for remainders
+        local color=""
+        eval color=\$${COLORS[$idx]}        # convert eg: 'red' -> $red
+        output "${color}${item}${coff}" >&1
+        (( count++ ));
+    done
+}
+
+errmesg()
+{
+    # Non-fatal errors don't need to exit
+    local err="Error: $1"
+    output "${yellow}${err}${coff}" >&2
+}
+
+fatalerr()
+{
+    # If exiting, pass along an exit code, too (defaults to 1: general error)
+    local err="$1"; shift
+    local code=${1:-1}
+    output "${red}Fatal error: ${err} - exiting${coff}" >&2
+    cleanup
+    exit ${code}
+}
+
+cleanup()
+{
+    # Please bus your own table.
+    verbose "Clearing out variables"
+    IFS=$oldIFS                         # in case of auto-export
+    unset COLORS filecdb maxcolors oldIFS opts usetxt verbose
+    unsetcolors
+}
+
+main()
+{
+    setup "$@"                          # Send all args for processing options
+    shift $(( $OPTIND - 1 ))            # Shift to first non-option
+    syntax $#                           # Send num of remaining args to verify
+
+    while [[ "$1" ]]                    # While we have something to work with
+    do
+        process "$1"                    # ...process it
+        shift                           # ...then move on
+    done
+    cleanup
+    exit 0
+}
+
+main "$@"

@@ -1,0 +1,80 @@
+#/usr/bin/env bash
+#
+# git-multi
+# Author: Eric T. Jorgensen
+# Date: 13-Jun-2014
+# License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
+#
+# This is NOT a direct answer to an in-class lab assignment, but rather a
+# similar-concepts alternate task.
+#
+# Functions, options, and loops to fetch and/or status all local git clones.
+# 
+
+syntax()
+{
+    # Syntax/Usage text if requested or not run correctly
+    echo -e "Usage: ${my_col}${0##*/} -[a|f|h|s]${my_off}"
+    echo
+    echo "Options:"
+    echo "    a)  All (fetch and status)"
+    echo "    f)  Fetch only (default)"
+    echo "    h)  Help (this text)"
+    echo "    s)  Status only"
+    echo 
+}
+
+setup()
+{
+    # Setup all vars and temp files/dirs
+    my_f=1;                             # Defaults in case of running w/o opts
+    my_s=0;
+    my_col='\e[0;33m'                   # Set a color for visual cues
+    my_off='\e[0m'                      # ... and reset code
+
+    # Process runtime options
+    while getopts ":afhs" my_opt
+    do
+        case $my_opt in                     # Check provided options...
+            a)  my_f=1; my_s=1          ;;  # ... -a for "all" (both)
+            f)  my_f=1; my_s=0          ;;  # ... -f for "fetch" (default)
+            h)  syntax; cleanup; exit 1 ;;  # ... -h for 'help" (syntax)
+            s)  my_f=9; my_s=1          ;;  # ... -s for "status"
+           \?)  my_f=0; my_s=0          ;;  # ... anything else "quiet" (none)
+        esac
+    done
+
+    my_pwd="$(pwd)"                     # Save current directory
+}
+
+cleanup()
+{
+    # Please bus your own table, in case auto-export is enabled
+    unset my_f my_s my_col my_off my_opt my_pwd
+}
+
+main()
+{
+    setup "$@"
+    shift $(( $OPTIND - 1 ));                   # Shift first non-option to $1
+
+    cd $HOME/git                                # Go to my git directory
+    local my_clone
+    for my_clone in $(ls .)                     # Find clone dirs...
+    do
+        echo -e "${my_col}${my_clone}${my_off}" # Display the one I'm processing
+        cd "$my_clone"                          # Dive in...
+
+        [[ "$my_f" -eq 1 ]] && git fetch        # ...Fetch if desired
+        [[ "$my_s" -eq 1 ]] && git status       # ...Status if desired
+
+        cd ..                                   # ...And go back
+        echo
+    done
+    cd "$my_pwd"                                # Go back to where we were
+
+    cleanup
+    exit 0
+}
+
+main "$@"
