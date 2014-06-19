@@ -1,0 +1,116 @@
+#/usr/bin/env bash
+#
+# git-multi
+# Author: Eric T. Jorgensen
+# Date: 13-Jun-2014
+# License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
+#
+# This is NOT a direct answer to an in-class lab assignment, but rather a
+# similar-concepts alternate task. Functions, loops, controlling menu, validating
+# user input, importing a function library, etc.
+#
+# Run the same task on all local git repositories.
+# 
+
+source $HOME/git/bash-examples/misctools.sc     # import a library of functions
+
+readonly GITDIR="$HOME/git"
+readonly MYPWD="$(pwd)"
+
+setup()
+
+{
+    setcolors
+
+    # Overkill for a one-option script, but here to compare with others
+    while getopts ":d" my_opt
+    do
+        case $my_opt in
+            d)  set -x ;;               # debug mode: enable -x
+        esac
+    done
+}
+
+cleanup()
+{
+    # Please bus your own table, in case auto-export is enabled
+
+    unset my_fe my_st my_col my_off my_opt my_pwd my_repo
+    unsetcolors
+}
+
+display_menu()
+{
+    # Choose Your Own Adventure...
+
+    local menu_txt=$(cat <<EOF
+ ${col_purple}Multi Git Menu${col_default}
+ ${col_purple}--------------${col_default}
+ ${col_yellow}1${col_default}) ${col_yellow}L${col_default}ist all repos
+ ${col_yellow}2${col_default}) ${col_yellow}F${col_default}etch all the repos
+ ${col_yellow}3${col_default}) ${col_yellow}S${col_default}tatus of all repos
+ ${col_yellow}Q${col_default}) ${col_yellow}Q${col_default}uit
+EOF
+)
+
+    clear
+    echo
+    echo -e "$menu_txt"
+    echo
+}
+
+process_clones()
+{
+    local cmd="$1"
+
+    echo
+    for my_repo in $(ls .)              # Find repository dirs...
+    do
+        # display the repo we're processing; always at least list
+        echo -e "${col_yellow}${my_repo}${col_default}"
+
+        case "$cmd" in
+            fetch)  cd "$my_repo"; git fetch; cd ..; echo  ;;
+            status) cd "$my_repo"; git status; cd ..; echo ;;
+        esac
+
+    done
+    echo
+}
+
+main()
+{
+    setup "$@"
+    shift $(( $OPTIND - 1 ));           # Shift first non-option to $1
+
+    local choice=""
+    local tmpin=""
+
+    if ! $(request_dir $GITDIR); then
+        echo "Error: $GITDIR is unavailable!" >&2
+        cleanup
+        exit 1
+    fi
+    cd "$GITDIR"
+
+    while [[ "$choice" = "" ]] || [[ ! "$choice" =~ ^[qQ]$ ]]
+    do
+        display_menu >&1
+        choice=$(valid_input " Enter option <1-3|l|f|s|q>" "^[1-3flqsFLQS]$")
+
+        case $choice in
+            1|l|L)  process_clones list   >&1 ;;
+            2|f|F)  process_clones fetch  >&1 ;;
+            3|s|S)  process_clones status >&1 ;;
+            q|Q)    cleanup; exit             ;;
+        esac
+
+        read -p " Press enter to continue: " tmpin >&1
+    done
+
+    cd "$MYPWD"
+    cleanup
+    exit 0
+}
+
+main "$@"
