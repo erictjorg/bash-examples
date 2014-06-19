@@ -12,7 +12,7 @@
 # Run the same task on all local git repositories.
 # 
 
-source $HOME/git/bash-examples/misctools.sc     # import a library of functions
+source $HOME/git/bash-examples/misctools.sh     # import a library of functions
 
 readonly GITDIR="$HOME/git"
 readonly MYPWD="$(pwd)"
