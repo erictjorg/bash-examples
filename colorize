@@ -50,7 +50,7 @@ setup()
     done
 
     # Defauls for anything yet unset
-    filecdb=${filecdb:="$HOME/git/bash-examples/colors.conf"}
+    filecdb=${filecdb:="$HOME/git/bash-examples/colorize.conf"}
     verbose=${verbose:=0}
 
     # Put some extras on the screen if we want the extras
@@ -167,8 +167,8 @@ process()
 
     # Test availability of file or directory provided
     if $(request_file "$arg") || $(request_dir "$arg"); then
-        # Find files within...
-        for file in $(find "$arg" -type f)
+        # Spelunk for files... sanity-check, just one level deep
+        for file in $(find "$arg" -maxdepth 1 -type f)
         do
             # Test availability of file
             if $(request_file "$file"); then
@@ -206,8 +206,8 @@ colorize()
 errmesg()
 {
     # Non-fatal errors don't need to exit
-    local err="Error: $1"
-    output "${yellow}${err}${coff}" >&2
+    local err="$1"
+    output "${yellow}Error: ${err}${coff}" >&2
 }
 
 fatalerr()
