@@ -21,7 +21,8 @@
 # script to UNcolor that file, or go all-out and display a context-color scheme.
 #
 
-readonly MINARGS=1              # Minimum number of files to colorize
+readonly MINARGS=1
+readonly DEFAULTDB="$HOME/git/bash-examples/colorize.conf"
 readonly DATAFORMAT="^([[:space:]]*#|[[:digit:]]*%[[:alpha:]]*$)"
 readonly COMMENTS="^[[:space:]]*#"
 # Two acceptible data file format line styles:
@@ -32,6 +33,8 @@ declare -gA COLORS              # Declare array of colors
 
 setup()
 {
+    # Any preparations...
+
     setcolors
     oldIFS=$IFS                 # Restore IFS later in case auto-export is on
     IFS=$'\n'                   # Newline IFS, needed to accept spacey names
@@ -50,7 +53,7 @@ setup()
     done
 
     # Defauls for anything yet unset
-    filecdb=${filecdb:="$HOME/git/bash-examples/colorize.conf"}
+    filecdb=${filecdb:="$DEFAULTDB"}
     verbose=${verbose:=0}
 
     # Put some extras on the screen if we want the extras
@@ -83,8 +86,8 @@ syntax()
 {
     # Display program's syntax if a user doesn't pass a file to script
     # ...or if they request it via options
-    local numargs=${1:-0}
 
+    local numargs=${1:-0}
     local usetxt=$(cat <<EOF
 Usage: ${cbold}${0##*/}${coff} [OPTION]... ${cbold}[DIR|FILE]${coff}...
 
@@ -110,6 +113,7 @@ setcolors()
     # Experiment with more codes by searching for "bash colors"
     # ...Some codes like "Blink" don't work with all terminals (thank sanity)
     # ...Explore ways to let the color database file control the names/codes
+
     cbold='\e[1m'       # Bold
     coff='\e[0m'        # Reset
     black='\e[0;30m'    # Standard Black
@@ -126,12 +130,14 @@ unsetcolors()
 {
     # Part of cleanup, but listed here to help remember to unset anything
     # added above; allowing for database table control can skip this
+
     unset cbold coff black red green yellow blue purple cyan white
 }
 
 verbose()
 {
     # Only display message if running in verbose mode
+
     [[ $verbose -eq 1 ]] \
         && output "${cbold}${*}${coff}" >&2     # For clean redirects
 }
@@ -162,6 +168,8 @@ request_dir()
 
 process()
 {
+    # "Go do that voodoo that you do so well..."
+
     local arg="$1"
     local file=""
 
@@ -185,14 +193,17 @@ process()
 
 output()
 {
-    echo -e "$*"                        # -e for escaped chars (like colors)
+    # -e for escaped chars (like colors); anything calling this will redirect
+
+    echo -e "$*"
 }
 
 colorize()
 {
     local file="$1"
     local count=0
-    local line=""
+    local item=""
+
     for item in $(cat "$file")
     do
         local idx=$(( count % maxcolors ))  # %-mod for remainders
@@ -206,15 +217,17 @@ colorize()
 errmesg()
 {
     # Non-fatal errors don't need to exit
-    local err="$1"
-    output "${yellow}Error: ${err}${coff}" >&2
+
+    output "${yellow}Error: ${1}${coff}" >&2
 }
 
 fatalerr()
 {
     # If exiting, pass along an exit code, too (defaults to 1: general error)
+
     local err="$1"; shift
     local code=${1:-1}
+
     output "${red}Fatal error: ${err} - exiting${coff}" >&2
     cleanup
     exit ${code}
@@ -223,6 +236,7 @@ fatalerr()
 cleanup()
 {
     # Please bus your own table.
+
     verbose "Clearing out variables"
     IFS=$oldIFS                         # in case of auto-export
     unset COLORS filecdb maxcolors oldIFS opts usetxt verbose
