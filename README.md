@@ -18,7 +18,7 @@ A few header lines to explain why I sometimes use different ones:
 
 Examples include:
 
-+ /colorize/ (with /colorize.conf/): Use a configuration file to process the screen printing of a text file with a repeating color pattern. 
-+ /git-multi/: Use command line options to pick activity on all local git repositories. Only 'fetch' and 'status' (or both).
-+ /git-menu/ (with /misctools.sh/): Use a looped menu to do the same thing as /git-multi/ with validated input and an imported library of functions.
++ __colorize__ (with __colorize.conf__) Use a configuration file to process the screen printing of a text file with a repeating color pattern. 
++ __git-multi__: Use command line options to pick activity on all local git repositories. Only 'fetch' and 'status' (or both).
++ __git-menu__ (with __misctools.sh__): Use a looped menu to do the same thing as __git-multi__ with validated input and an imported library of functions.
 
