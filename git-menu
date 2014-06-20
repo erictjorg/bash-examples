@@ -64,10 +64,10 @@ process_clones()
     local cmd="$1"
 
     echo
-    for my_repo in $(ls .)              # Find repository dirs...
+    for my_repo in $(ls -d ./*)         # Find repository dirs...
     do
         # display the repo we're processing; always at least list
-        echo -e "${col_yellow}${my_repo}${col_default}"
+        echo -e "${col_yellow}${my_repo#./}${col_default}"
 
         case "$cmd" in
             fetch)  cd "$my_repo"; git fetch; cd ..; echo  ;;
@@ -102,7 +102,7 @@ main()
             1|l|L)  process_clones list   >&1 ;;
             2|f|F)  process_clones fetch  >&1 ;;
             3|s|S)  process_clones status >&1 ;;
-            q|Q)    cleanup; exit             ;;
+            q|Q)    echo >&1 ; cleanup ; exit ;;
         esac
 
         read -p " Press enter to continue: " tmpin >&1

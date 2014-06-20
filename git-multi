@@ -60,9 +60,9 @@ main()
 
     cd $HOME/git                                # Go to my git directory
     local my_clone
-    for my_clone in $(ls .)                     # Find clone dirs...
+    for my_clone in $(ls -d ./*)                # Find clone dirs...
     do
-        echo -e "${my_col}${my_clone}${my_off}" # Display the one I'm processing
+        echo -e "${my_col}${my_clone#./}${my_off}"  # Display the current one
         cd "$my_clone"                          # Dive in...
 
         [[ "$my_f" -eq 1 ]] && git fetch        # ...Fetch if desired
