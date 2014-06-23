@@ -5,7 +5,7 @@ Bash examples using classroom concepts but without direct lab answers
 
 ---
 
-A few header lines to explain why I sometimes use different ones:
+A few header lines to describe why I sometimes use different headers:
 
 ```bash
 #!/bin/bash             # Standard location in most Linux distros

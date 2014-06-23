@@ -2,7 +2,7 @@
 #
 # git-multi
 # Author: Eric T. Jorgensen
-# Date: 19-Jun-2014
+# Date: 23-Jun-2014
 # License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
 #
 # This is NOT a direct answer to an in-class lab assignment, but rather a
@@ -10,6 +10,11 @@
 # user input, importing a function library, etc.
 #
 # Run the same task on all local git repositories.
+#
+# Changelog:
+#   23-Jun-2014 - Added changelog, swapped to single-character input function
+#   20-Jun-2014 - Safer globbing in process_clones() loop
+#   19-Jun-2014 - Menu-based edition of command-line edition git-multi
 # 
 
 source $HOME/git/bash-examples/misctools.sh     # import a library of functions
@@ -64,6 +69,7 @@ process_clones()
     local cmd="$1"
 
     echo
+    echo
     for my_repo in $(ls -d ./*)         # Find repository dirs...
     do
         # display the repo we're processing; always at least list
@@ -83,6 +89,8 @@ main()
     setup "$@"
     shift $(( $OPTIND - 1 ));           # Shift first non-option to $1
 
+    local prompt=" Enter option <1-3|l|f|s|q>"
+    local pattern="^[1-3lfsqLFSQ]$"
     local choice=""
     local tmpin=""
 
@@ -96,13 +104,13 @@ main()
     while [[ "$choice" = "" ]] || [[ ! "$choice" =~ ^[qQ]$ ]]
     do
         display_menu >&1
-        choice=$(valid_input " Enter option <1-3|l|f|s|q>" "^[1-3flqsFLQS]$")
+        choice=$(valid_input_char "$prompt" "$pattern")
 
         case $choice in
-            1|l|L)  process_clones list   >&1 ;;
-            2|f|F)  process_clones fetch  >&1 ;;
-            3|s|S)  process_clones status >&1 ;;
-            q|Q)    echo >&1 ; cleanup ; exit ;;
+            1|l|L)  process_clones list   >&1         ;;
+            2|f|F)  process_clones fetch  >&1         ;;
+            3|s|S)  process_clones status >&1         ;;
+            q|Q)    echo >&1; echo >&1; cleanup; exit ;;
         esac
 
         read -p " Press enter to continue: " tmpin >&1

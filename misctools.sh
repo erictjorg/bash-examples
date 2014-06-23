@@ -2,7 +2,7 @@
 #
 # MiscTools
 # Author: Eric T. Jorgensen
-# Date: 10-Jun-2014
+# Date: 23-Jun-2014
 # License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
 #
 # This is NOT a direct answer to an in-class lab assignment, but rather a
@@ -10,6 +10,11 @@
 #
 # An example of general functions in a file to be included in any script
 # that may need them... or sourceable on the shell itself to run as is.
+#
+# Changelog:
+#   23-Jun-2014 - Added valid_input_char() and changelog
+#   19-Jun-2014 - Reanmed from .lib to .sh extension
+#   16-Jun-2014 - Initial git commit
 # 
 
 setcolors()
@@ -61,7 +66,7 @@ col_echo()
 
 valid_input()
 {
-    # Validate user input; requires non-empty input
+    # Validate user input; requires non-empty input and carriage return
     # $1 = Prompt
     # $2 = Regex pattern for validation (default printable)
     #
@@ -77,6 +82,30 @@ valid_input()
     do
         read -p "${prompt}: " input
     done
+    echo "$input"
+    return 0
+}
+
+valid_input_char()
+{
+    # Validate user input; requires single-character matching input
+    # $1 = Prompt
+    # $2 = Regex pattern for validation (default printable)
+    #
+    # Usage:  var=$(valid_input "prompt" "regex")
+    # ie:     var=$(valid_input "Die Roll <1-6>" "^[1-6]$")
+    #         var=$(valid_input "Hex Digit" "^[0-9a-fA-F]"
+    #
+    local prompt="$1"; shift
+    local options="${1:-[[:print:]]}"
+    local input=""
+
+    echo -n "${prompt}: " >&2
+    while [[ "$input" = "" ]] || [[ ! "$input" =~ $options ]]
+    do
+        read -n 1 -s input              # Input is silent until it matches
+    done
+    echo -n "$input" >&2                # Display matching input
     echo "$input"
     return 0
 }

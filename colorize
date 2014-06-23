@@ -2,7 +2,7 @@
 #
 # Colorize
 # Author: Eric T. Jorgensen
-# Date: 17-Jun-2014
+# Date: 23-Jun-2014
 # License: GPL V2: http://www.gnu.org/licenses/gpl-2.0.html
 #
 # This is NOT a direct answer to an in-class lab assignment, but rather a
@@ -19,6 +19,11 @@
 # Basic line-by-line cycle.  Try breaking it, allowing the color database to 
 # control more of the schema, redirecting output to a file and writing a 
 # script to UNcolor that file, or go all-out and display a context-color scheme.
+#
+# Changelog:
+#   23-Jun-2014 - Added changelog
+#   18-Jun-2014 - Limited process() find maxdepth to 1, renamed config file
+#   16-Jun-2014 - Initial git commit, days after prompting conversation
 #
 
 readonly MINARGS=1
