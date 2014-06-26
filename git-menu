@@ -12,6 +12,7 @@
 # Run the same task on all local git repositories.
 #
 # Changelog:
+#   26-Jun-2014 - Added listing all branches, use short status
 #   23-Jun-2014 - Added changelog, swapped to single-character input function
 #   20-Jun-2014 - Safer globbing in process_clones() loop
 #   19-Jun-2014 - Menu-based edition of command-line edition git-multi
@@ -52,8 +53,9 @@ display_menu()
  ${col_purple}Multi Git Menu${col_default}
  ${col_purple}--------------${col_default}
  ${col_yellow}1${col_default}) ${col_yellow}L${col_default}ist all repos
- ${col_yellow}2${col_default}) ${col_yellow}F${col_default}etch all the repos
- ${col_yellow}3${col_default}) ${col_yellow}S${col_default}tatus of all repos
+ ${col_yellow}2${col_default}) ${col_yellow}B${col_default}ranch lists
+ ${col_yellow}3${col_default}) ${col_yellow}F${col_default}etch all the repos
+ ${col_yellow}4${col_default}) ${col_yellow}S${col_default}tatus of all repos
  ${col_yellow}Q${col_default}) ${col_yellow}Q${col_default}uit
 EOF
 )
@@ -76,8 +78,9 @@ process_clones()
         echo -e "${col_yellow}${my_repo#./}${col_default}"
 
         case "$cmd" in
-            fetch)  cd "$my_repo"; git fetch; cd ..; echo  ;;
-            status) cd "$my_repo"; git status; cd ..; echo ;;
+            branch) cd "$my_repo"; git branch -a;    cd ..; echo ;;
+            fetch)  cd "$my_repo"; git fetch --all;  cd ..; echo ;;
+            status) cd "$my_repo"; git status -s -b; cd ..; echo ;;
         esac
 
     done
@@ -89,8 +92,8 @@ main()
     setup "$@"
     shift $(( $OPTIND - 1 ));           # Shift first non-option to $1
 
-    local prompt=" Enter option <1-3|l|f|s|q>"
-    local pattern="^[1-3lfsqLFSQ]$"
+    local prompt=" Enter option <1-3|l|b|f|s|q>"
+    local pattern="^[1-4lbfsqLBFSQ]$"
     local choice=""
     local tmpin=""
 
@@ -108,8 +111,9 @@ main()
 
         case $choice in
             1|l|L)  process_clones list   >&1         ;;
-            2|f|F)  process_clones fetch  >&1         ;;
-            3|s|S)  process_clones status >&1         ;;
+            2|b|B)  process_clones branch >&1         ;;
+            3|f|F)  process_clones fetch  >&1         ;;
+            4|s|S)  process_clones status >&1         ;;
             q|Q)    echo >&1; echo >&1; cleanup; exit ;;
         esac
 
