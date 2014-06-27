@@ -92,7 +92,7 @@ main()
     setup "$@"
     shift $(( $OPTIND - 1 ));           # Shift first non-option to $1
 
-    local prompt=" Enter option <1-3|l|b|f|s|q>"
+    local prompt=" Enter option <1-4,l,b,f,s,q>"
     local pattern="^[1-4lbfsqLBFSQ]$"
     local choice=""
     local tmpin=""
